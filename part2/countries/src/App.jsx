@@ -1,34 +1,50 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useState, useEffect } from 'react'
+import axios from 'axios'
+import CountryList from './components/CountryList'
+import CountryDetail from './components/CountryDetail'
 
-function App() {
-  const [count, setCount] = useState(0)
+const App = () => {
+  const [countries, setCountries] = useState([])
+  const [search, setSearch] = useState('')
+  const [selectedCountry, setSelectedCountry] = useState(null)
+
+  useEffect(() => {
+    axios
+      .get('https://studies.cs.helsinki.fi/restcountries/api/all')
+      .then(response => {
+        setCountries(response.data)
+      })
+  }, [])
+
+  const handleSearchChange = (event) => {
+    setSearch(event.target.value)
+    setSelectedCountry(null)
+  }
+
+  const filteredCountries = countries.filter(country =>
+    country.name.common.toLowerCase().includes(search.toLowerCase())
+  )
 
   return (
-    <>
+    <div>
       <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+        find countries{' '}
+        <input value={search} onChange={handleSearchChange} />
       </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
+
+      {selectedCountry ? (
+        <CountryDetail country={selectedCountry} />
+      ) : filteredCountries.length > 10 ? (
+        <p>Too many matches, specify another filter</p>
+      ) : filteredCountries.length > 1 ? (
+        <CountryList
+          countries={filteredCountries}
+          onShow={setSelectedCountry}
+        />
+      ) : filteredCountries.length === 1 ? (
+        <CountryDetail country={filteredCountries[0]} />
+      ) : null}
+    </div>
   )
 }
 
